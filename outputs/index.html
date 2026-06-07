@@ -16,6 +16,7 @@
   <link rel="stylesheet" href="guide.css">
   <link rel="stylesheet" href="picks.css?v=20260607-2">
   <link rel="stylesheet" href="author.css">
+  <link rel="stylesheet" href="validation.css">
 </head>
 <body>
   <aside class="sidebar">
@@ -36,6 +37,7 @@
   </aside>
 
   <main>
+    <div id="freshness-alert" class="freshness-alert" hidden></div>
     <header>
       <div><p class="eyebrow">MODEL PORTFOLIO · <span id="market-date">資料載入中</span></p><h1>把判斷，變成可以驗證的策略。</h1></div>
       <div class="header-meta"><span class="author-badge">BY JUNTING</span><div class="status"><i></i>官方盤後資料 · 每日更新</div></div>
@@ -49,9 +51,10 @@
         <a href="#picks">查看 10 檔候選股 →</a>
       </div>
       <div class="score-card">
-        <div class="score-top"><span>策略信心分數</span><b>偏多 / 審慎</b></div>
-        <div class="gauge"><div><strong>72</strong><small>/ 100</small></div></div>
-        <div class="score-grid"><div><span>趨勢</span><b>強</b></div><div><span>風險</span><b>中</b></div><div><span>部位</span><b>70%</b></div></div>
+        <div class="score-top"><span>動態模型信心度</span><b id="confidence-label">計算中</b></div>
+        <div class="gauge"><div id="confidence-gauge"><strong id="confidence-score">—</strong><small>/ 100</small></div></div>
+        <div class="score-grid"><div><span>走勢外推勝率</span><b id="validation-win-rate">—</b></div><div><span>資料完整度</span><b id="data-completeness">—</b></div><div><span>建議曝險</span><b id="hero-exposure">—</b></div></div>
+        <p class="confidence-note" id="confidence-note">信心度由歷史驗證、資料完整度、大盤趨勢與排名差距共同計算。</p>
       </div>
     </section>
 
@@ -156,6 +159,7 @@
         <article><span>勝率</span><strong id="win-rate"></strong></article>
         <article><span>交易次數</span><strong id="trades"></strong></article>
       </div>
+      <div class="validation-summary"><div><span>推薦模型走勢外推</span><strong id="validation-return">—</strong><small>扣除交易成本後累積報酬</small></div><div><span>同期加權指數</span><strong id="benchmark-return">—</strong><small>相同驗證期間</small></div><div><span>超額報酬</span><strong id="excess-return">—</strong><small id="validation-periods">—</small></div></div>
       <div class="equity-wrap"><span class="chart-label">策略資產曲線</span><canvas id="equity-chart"></canvas></div>
       <p class="disclaimer">排名使用 TWSE、TPEx 官方盤後與財務資料，歷史價格來自 Yahoo Finance。回測不含交易成本、滑價與股利，且不代表未來績效；交易前請核對最新行情。</p>
     </section>
@@ -168,6 +172,6 @@
     <a href="#guide">存股</a>
     <a href="#analysis">分析</a>
   </nav>
-  <script src="app.js?v=20260607-2"></script>
+  <script src="app.js?v=20260607-3"></script>
 </body>
 </html>

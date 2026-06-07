@@ -110,8 +110,9 @@ function ma(a, n, i) { if (i < n - 1) return null; let x = 0; for (let j = i - n
 function backtest() {
   const s = stocks.find(x => x.code === btSelect.value), prices = s.prices, fast = +document.querySelector("#fast-ma").value, slow = +document.querySelector("#slow-ma").value, stop = +document.querySelector("#stop-pct").value;
   let cash = 100, units = 0, entry = 0, wins = 0, trades = 0, equity = [];
-  for (let i = 0; i < prices.length; i++) { const f = ma(prices, fast, i), l = ma(prices, slow, i), p = prices[i]; if (!units && f && f > l) { units = cash / p; entry = p; cash = 0; } if (units && ((f && f < l) || p < entry * (1 - stop))) { cash = units * p; if (p > entry) wins++; trades++; units = 0; } equity.push(cash + units * p); }
-  if (units) { cash = units * prices.at(-1); if (prices.at(-1) > entry) wins++; trades++; }
+  const cost = .003;
+  for (let i = 0; i < prices.length; i++) { const f = ma(prices, fast, i), l = ma(prices, slow, i), p = prices[i]; if (!units && f && f > l) { units = cash * (1 - cost / 2) / p; entry = p; cash = 0; } if (units && ((f && f < l) || p < entry * (1 - stop))) { cash = units * p * (1 - cost / 2); if (p > entry) wins++; trades++; units = 0; } equity.push(cash + units * p); }
+  if (units) { cash = units * prices.at(-1) * (1 - cost / 2); if (prices.at(-1) > entry) wins++; trades++; }
   let peak = equity[0], dd = 0; equity.forEach(v => { peak = Math.max(peak, v); dd = Math.min(dd, (v - peak) / peak); });
   document.querySelector("#total-return").textContent = `${cash >= 100 ? "+" : ""}${(cash - 100).toFixed(1)}%`; document.querySelector("#drawdown").textContent = `${(dd * 100).toFixed(1)}%`; document.querySelector("#win-rate").textContent = `${trades ? Math.round(wins / trades * 100) : 0}%`; document.querySelector("#trades").textContent = trades; draw(document.querySelector("#equity-chart"), equity);
 }
@@ -137,6 +138,23 @@ async function init() {
     document.querySelector("#market-state").textContent = marketFilter.state;
     document.querySelector("#market-description").textContent = marketFilter.description;
     document.querySelector("#market-exposure").textContent = `${marketFilter.exposure}% 以下`;
+    const confidence = data.confidence || {score: 50, label: "資料不足", validation: {}, data_completeness: 0, freshness_days: 99};
+    document.querySelector("#confidence-score").textContent = confidence.score;
+    document.querySelector("#confidence-label").textContent = `${confidence.label}信心`;
+    document.querySelector("#confidence-gauge").style.background = `conic-gradient(var(--green) 0 ${confidence.score}%, #26332e ${confidence.score}%)`;
+    document.querySelector("#validation-win-rate").textContent = `${confidence.validation.win_rate || 0}%`;
+    document.querySelector("#data-completeness").textContent = `${confidence.data_completeness || 0}%`;
+    document.querySelector("#hero-exposure").textContent = `${marketFilter.exposure}%`;
+    document.querySelector("#validation-return").textContent = `${confidence.validation.strategy_return >= 0 ? "+" : ""}${confidence.validation.strategy_return || 0}%`;
+    document.querySelector("#benchmark-return").textContent = `${confidence.validation.benchmark_return >= 0 ? "+" : ""}${confidence.validation.benchmark_return || 0}%`;
+    document.querySelector("#excess-return").textContent = `${confidence.validation.excess_return >= 0 ? "+" : ""}${confidence.validation.excess_return || 0}%`;
+    document.querySelector("#validation-periods").textContent = `${confidence.validation.periods || 0} 個走勢外推期間；每次成本 ${confidence.validation.cost_assumption || 0}%`;
+    document.querySelector("#confidence-note").textContent = confidence.validation.method || "樣本不足，信心度上限為 60。";
+    if (confidence.freshness_days > 3) {
+      const alert = document.querySelector("#freshness-alert");
+      alert.hidden = false;
+      alert.textContent = `資料已過期 ${confidence.freshness_days} 天，排名與進場價格僅供參考，請等待下一次更新。`;
+    }
     const actions = marketFilter.state === "多頭"
       ? ["可依進場區間分批建立部位", "仍保留至少 20% 現金", "短線過熱或等待回測標的不追價"]
       : marketFilter.state === "中性"
