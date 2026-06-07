@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="defense.css">
   <link rel="stylesheet" href="dark-theme.css">
   <link rel="stylesheet" href="load-error.css">
+  <link rel="stylesheet" href="guide.css">
 </head>
 <body>
   <aside class="sidebar">
@@ -21,6 +22,7 @@
       <a class="active" href="#overview">市場總覽</a>
       <a href="#picks">策略選股</a>
       <a href="#market">全部股票</a>
+      <a href="#guide">存股指南</a>
       <a href="#analysis">股票分析</a>
       <a href="#backtest">策略回測</a>
     </nav>
@@ -67,6 +69,26 @@
           <div class="risk-output"><span>目前分析標的最大部位</span><strong id="max-position">—</strong><small id="risk-output-note">依停損距離與單筆風險計算</small></div>
         </article>
       </div>
+    </section>
+
+    <section id="guide" class="guide-section">
+      <div class="section-head"><div><p class="eyebrow">LONG-TERM PLAYBOOK</p><h2>如何用這個網站選擇存股</h2></div><p>排名只是入口。穩定存股的核心，是用基本面確認企業品質、用價格紀律降低買貴風險，再用分散配置控制單一事件傷害。</p></div>
+      <div class="guide-flow">
+        <article><span>01</span><div><h3>先看大盤濾網</h3><p>多頭時股票曝險上限 80%；中性降至 55%；防守時降至 30%。不因市場熱度而滿倉。</p></div></article>
+        <article><span>02</span><div><h3>篩選長期品質</h3><p>股票優先選品質條件通過 4/5 以上：EPS 正值、ROE ≥ 10%、營業現金流正值、負債比 &lt; 60%、營收年增為正。</p></div></article>
+        <article><span>03</span><div><h3>等待合理價格</h3><p>優先查看「可分批進場」，並在模型進場區間內執行。若顯示等待回測，不追價；暫不進場則保留資金。</p></div></article>
+        <article><span>04</span><div><h3>分批建立部位</h3><p>第一批投入預計部位 40%，回測支撐後投入 30%，基本面持續良好且趨勢轉強再投入 30%。</p></div></article>
+        <article><span>05</span><div><h3>每季重新檢查</h3><p>若品質降至 2/5 以下、現金流持續轉負、負債惡化或商業模式改變，就重新評估，不只為了領股息而持有。</p></div></article>
+      </div>
+      <div class="guide-details">
+        <article><div class="guide-title"><span class="guide-icon">股</span><div><h3>存個股的最低門檻</h3><p>適合願意追蹤公司財報與產業變化的投資人</p></div></div><ul><li>品質條件至少通過 4 / 5</li><li>商業模式容易理解，獲利不依賴一次性事件</li><li>避免單一熱門題材、處置股與成交量過低股票</li><li>單一公司不超過總資金 5%–8%</li></ul></article>
+        <article><div class="guide-title"><span class="guide-icon">ETF</span><div><h3>存 ETF 的最低門檻</h3><p>適合希望分散個股風險的投資人</p></div></div><ul><li>以大型原型市場 ETF 為核心</li><li>避免槓桿、反向與複雜期貨型 ETF 作為長期核心</li><li>留意費用率、規模、流動性、折溢價與集中度</li><li>高股息不等於低風險，也不保證填息</li></ul></article>
+      </div>
+      <div class="allocation-card">
+        <div><p class="eyebrow">SAMPLE ALLOCATION</p><h3>偏穩定的參考配置</h3><p>依個人風險承受度調整，不需要一次投入。</p></div>
+        <div class="allocation-bars"><span style="--w:50%"><b>50%</b>大型市場型 ETF</span><span style="--w:20%"><b>20%</b>高品質大型股票</span><span style="--w:10%"><b>10%</b>股息型 ETF</span><span style="--w:20%"><b>20%</b>現金或短債 ETF</span></div>
+      </div>
+      <p class="guide-note">此流程用於建立篩選與風控紀律，不保證獲利。ETF 仍具有市場、集中度、流動性、折溢價與追蹤誤差等風險。</p>
     </section>
 
     <section id="picks">
@@ -134,8 +156,8 @@
   <nav class="mobile-nav">
     <a href="#overview">總覽</a>
     <a href="#market">全部標的</a>
+    <a href="#guide">存股</a>
     <a href="#analysis">分析</a>
-    <a href="#backtest">回測</a>
   </nav>
   <script src="app.js"></script>
 </body>
