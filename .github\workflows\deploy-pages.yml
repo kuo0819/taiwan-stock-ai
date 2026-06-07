@@ -1,0 +1,88 @@
+name: 更新台股資料並部署網站
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+  schedule:
+    # 台灣時間週一至週五 18:30，等待盤後官方資料完成更新。
+    - cron: "30 10 * * 1-5"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: 下載專案
+        uses: actions/checkout@v4
+
+      - name: 設定 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: 更新全市場分析資料
+        id: update
+        continue-on-error: true
+        run: python work/update_market.py
+
+      - name: 組裝網站發布目錄
+        run: |
+          rm -rf _site
+          mkdir -p _site
+
+          if [ -d outputs ]; then
+            cp -R outputs/. _site/
+          fi
+
+          for file in index.html app.js styles.css market.css defense.css dark-theme.css load-error.css .nojekyll; do
+            if [ -f "$file" ]; then
+              cp "$file" _site/
+            fi
+          done
+
+          if [ -f outputs/market-data.json ]; then
+            cp outputs/market-data.json _site/market-data.json
+          elif [ -f market-data.json ]; then
+            cp market-data.json _site/market-data.json
+          fi
+
+          test -f _site/index.html
+          test -f _site/app.js
+          test -f _site/styles.css
+          test -f _site/market.css
+          test -f _site/defense.css
+          test -f _site/dark-theme.css
+          test -f _site/load-error.css
+          test -f _site/market-data.json
+          python -c "import json; d=json.load(open('_site/market-data.json', encoding='utf-8')); assert d['stocks'], 'market-data.json has no stocks'"
+
+      - name: 顯示資料更新備援警告
+        if: steps.update.outcome == 'failure'
+        run: echo "::warning::官方資料來源暫時無法使用，本次部署沿用 repository 內上一版 market-data.json。"
+
+      - name: 設定 GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: 上傳網站
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: 部署至 GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
