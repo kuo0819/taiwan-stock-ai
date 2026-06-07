@@ -14,7 +14,7 @@
   <link rel="stylesheet" href="dark-theme.css">
   <link rel="stylesheet" href="load-error.css">
   <link rel="stylesheet" href="guide.css">
-  <link rel="stylesheet" href="picks.css">
+  <link rel="stylesheet" href="picks.css?v=20260607-2">
   <link rel="stylesheet" href="author.css">
 </head>
 <body>
@@ -96,11 +96,11 @@
     <section id="picks">
       <div class="section-head"><div><p class="eyebrow">MODEL PICKS</p><h2 id="picks-title">全市場前 10 名</h2></div><p id="method-text">正在讀取全市場排名資料。</p></div>
       <div class="pick-tabs" role="group" aria-label="Top 10 分類">
-        <button class="active" data-pick-category="all">全部</button>
-        <button data-pick-category="ETF">ETF</button>
-        <button data-pick-category="electronic">電子</button>
-        <button data-pick-category="financial">金融</button>
-        <button data-pick-category="traditional">傳產／其他</button>
+        <button class="active" type="button" aria-pressed="true" data-pick-category="all">全部</button>
+        <button type="button" aria-pressed="false" data-pick-category="ETF">ETF</button>
+        <button type="button" aria-pressed="false" data-pick-category="electronic">電子</button>
+        <button type="button" aria-pressed="false" data-pick-category="financial">金融</button>
+        <button type="button" aria-pressed="false" data-pick-category="traditional">傳產／其他</button>
       </div>
       <div id="stock-grid" class="stock-grid"></div>
     </section>
@@ -168,6 +168,6 @@
     <a href="#guide">存股</a>
     <a href="#analysis">分析</a>
   </nav>
-  <script src="app.js"></script>
+  <script src="app.js?v=20260607-2"></script>
 </body>
 </html>

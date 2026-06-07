@@ -32,16 +32,21 @@ function ensureOption(element, code) {
 }
 
 function renderStocks() {
-  grid.innerHTML = ""; select.innerHTML = ""; btSelect.innerHTML = "";
+  renderPickCards();
+  select.innerHTML = ""; btSelect.innerHTML = "";
+  stocks.slice(0, 100).forEach(s => {
+    select.innerHTML += `<option value="${s.code}">${s.code} ${s.name}｜${s.decision}</option>`;
+    btSelect.innerHTML += `<option value="${s.code}">${s.code} ${s.name}</option>`;
+  });
+}
+
+function renderPickCards() {
+  grid.innerHTML = "";
   const labels = {all: "全市場", ETF: "ETF", electronic: "電子類", financial: "金融類", traditional: "傳產／其他"};
   const picks = stocks.filter(s => pickCategory === "all" || stockCategory(s) === pickCategory).slice(0, 10);
   document.querySelector("#picks-title").textContent = `${labels[pickCategory]}前 10 名`;
   picks.forEach((s, i) => {
     grid.innerHTML += `<article class="stock" data-code="${s.code}"><div class="top"><span class="rank">#${String(i + 1).padStart(2, "0")}</span><span class="score">QMR ${s.score}</span></div><h3>${s.name}</h3><span class="code">${s.code} · ${s.market}</span><div class="price">NT$ ${money(s.price)}</div><span class="decision ${s.decision_code}">${s.decision}</span><span class="industry">${s.industry}</span></article>`;
-  });
-  stocks.slice(0, 100).forEach(s => {
-    select.innerHTML += `<option value="${s.code}">${s.code} ${s.name}｜${s.decision}</option>`;
-    btSelect.innerHTML += `<option value="${s.code}">${s.code} ${s.name}</option>`;
   });
   document.querySelectorAll(".stock").forEach(el => el.onclick = () => openStock(el.dataset.code));
 }
@@ -153,10 +158,15 @@ document.querySelector("#prev-page").onclick = () => { page--; renderMarket(); }
 document.querySelector("#next-page").onclick = () => { page++; renderMarket(); };
 document.querySelector("#capital").oninput = calculateRisk;
 document.querySelector("#risk-budget").onchange = calculateRisk;
-document.querySelectorAll("[data-pick-category]").forEach(button => button.onclick = () => {
+document.querySelector(".pick-tabs").addEventListener("click", event => {
+  const button = event.target.closest("[data-pick-category]");
+  if (!button || !stocks.length) return;
   pickCategory = button.dataset.pickCategory;
-  document.querySelectorAll("[data-pick-category]").forEach(x => x.classList.toggle("active", x === button));
-  renderStocks();
+  document.querySelectorAll("[data-pick-category]").forEach(x => {
+    x.classList.toggle("active", x === button);
+    x.setAttribute("aria-pressed", x === button ? "true" : "false");
+  });
+  renderPickCards();
 });
 window.onresize = () => { if (stocks.length) { update(select.value); backtest(); } };
 init();
