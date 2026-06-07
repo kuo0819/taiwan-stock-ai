@@ -1,6 +1,7 @@
 let stocks = [];
 let page = 1;
 let marketFilter = null;
+let pickCategory = "all";
 const pageSize = 40;
 const money = n => n >= 1000 ? n.toLocaleString("zh-TW", {maximumFractionDigits: 0}) : n.toLocaleString("zh-TW", {maximumFractionDigits: 2});
 const grid = document.querySelector("#stock-grid");
@@ -32,7 +33,10 @@ function ensureOption(element, code) {
 
 function renderStocks() {
   grid.innerHTML = ""; select.innerHTML = ""; btSelect.innerHTML = "";
-  stocks.slice(0, 10).forEach((s, i) => {
+  const labels = {all: "全市場", ETF: "ETF", electronic: "電子類", financial: "金融類", traditional: "傳產／其他"};
+  const picks = stocks.filter(s => pickCategory === "all" || stockCategory(s) === pickCategory).slice(0, 10);
+  document.querySelector("#picks-title").textContent = `${labels[pickCategory]}前 10 名`;
+  picks.forEach((s, i) => {
     grid.innerHTML += `<article class="stock" data-code="${s.code}"><div class="top"><span class="rank">#${String(i + 1).padStart(2, "0")}</span><span class="score">QMR ${s.score}</span></div><h3>${s.name}</h3><span class="code">${s.code} · ${s.market}</span><div class="price">NT$ ${money(s.price)}</div><span class="decision ${s.decision_code}">${s.decision}</span><span class="industry">${s.industry}</span></article>`;
   });
   stocks.slice(0, 100).forEach(s => {
@@ -40,6 +44,14 @@ function renderStocks() {
     btSelect.innerHTML += `<option value="${s.code}">${s.code} ${s.name}</option>`;
   });
   document.querySelectorAll(".stock").forEach(el => el.onclick = () => openStock(el.dataset.code));
+}
+
+function stockCategory(s) {
+  if (s.asset_type === "ETF") return "ETF";
+  const industry = s.industry || "";
+  if (/半導體|電子|電腦|光電|通信|資訊|數位|網路/.test(industry)) return "electronic";
+  if (/金融|保險|證券/.test(industry)) return "financial";
+  return "traditional";
 }
 
 function filteredStocks() {
@@ -120,6 +132,12 @@ async function init() {
     document.querySelector("#market-state").textContent = marketFilter.state;
     document.querySelector("#market-description").textContent = marketFilter.description;
     document.querySelector("#market-exposure").textContent = `${marketFilter.exposure}% 以下`;
+    const actions = marketFilter.state === "多頭"
+      ? ["可依進場區間分批建立部位", "仍保留至少 20% 現金", "短線過熱或等待回測標的不追價"]
+      : marketFilter.state === "中性"
+        ? ["只買品質 4/5 以上且可分批進場標的", "新部位縮小至平常的一半", "保留約 45% 現金等待趨勢確認"]
+        : ["暫停積極新增個股部位", "優先保留現金、短債或防禦型 ETF", "現有持股跌破風控條件時執行減碼"];
+    document.querySelector("#market-actions").innerHTML = actions.map(x => `<li>${x}</li>`).join("");
     renderStocks(); renderMarket(); update(stocks[0].code); backtest();
   } catch (e) {
     grid.innerHTML = `<div class="load-error"><b>全市場資料載入失敗</b><p>${e.message || "請稍後重新整理。"}</p><button onclick="location.reload()">重新載入</button></div>`;
@@ -135,5 +153,10 @@ document.querySelector("#prev-page").onclick = () => { page--; renderMarket(); }
 document.querySelector("#next-page").onclick = () => { page++; renderMarket(); };
 document.querySelector("#capital").oninput = calculateRisk;
 document.querySelector("#risk-budget").onchange = calculateRisk;
+document.querySelectorAll("[data-pick-category]").forEach(button => button.onclick = () => {
+  pickCategory = button.dataset.pickCategory;
+  document.querySelectorAll("[data-pick-category]").forEach(x => x.classList.toggle("active", x === button));
+  renderStocks();
+});
 window.onresize = () => { if (stocks.length) { update(select.value); backtest(); } };
 init();

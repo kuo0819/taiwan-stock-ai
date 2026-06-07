@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="dark-theme.css">
   <link rel="stylesheet" href="load-error.css">
   <link rel="stylesheet" href="guide.css">
+  <link rel="stylesheet" href="picks.css">
 </head>
 <body>
   <aside class="sidebar">
@@ -63,7 +64,7 @@
     <section class="defense-panel">
       <div class="section-head"><div><p class="eyebrow">DEFENSIVE FILTER</p><h2>大盤濾網與投組風控</h2></div><p>先決定可承擔多少市場風險，再決定買哪一檔股票。</p></div>
       <div class="defense-grid">
-        <article class="market-filter-card"><span>大盤狀態</span><strong id="market-state">載入中</strong><p id="market-description"></p><div><small>建議股票曝險</small><b id="market-exposure">—</b></div></article>
+        <article class="market-filter-card"><span>大盤狀態</span><strong id="market-state">載入中</strong><p id="market-description"></p><div><small>建議股票曝險</small><b id="market-exposure">—</b></div><ul id="market-actions"></ul></article>
         <article class="risk-calculator">
           <div><label>投資資金（元）<input id="capital" type="number" value="1000000" min="10000" step="10000"></label><label>單筆最大風險<select id="risk-budget"><option value=".005">0.5%</option><option value=".01">1.0%</option></select></label></div>
           <div class="risk-output"><span>目前分析標的最大部位</span><strong id="max-position">—</strong><small id="risk-output-note">依停損距離與單筆風險計算</small></div>
@@ -92,7 +93,14 @@
     </section>
 
     <section id="picks">
-      <div class="section-head"><div><p class="eyebrow">MODEL PICKS</p><h2>全市場前 10 名</h2></div><p id="method-text">正在讀取全市場排名資料。</p></div>
+      <div class="section-head"><div><p class="eyebrow">MODEL PICKS</p><h2 id="picks-title">全市場前 10 名</h2></div><p id="method-text">正在讀取全市場排名資料。</p></div>
+      <div class="pick-tabs" role="group" aria-label="Top 10 分類">
+        <button class="active" data-pick-category="all">全部</button>
+        <button data-pick-category="ETF">ETF</button>
+        <button data-pick-category="electronic">電子</button>
+        <button data-pick-category="financial">金融</button>
+        <button data-pick-category="traditional">傳產／其他</button>
+      </div>
       <div id="stock-grid" class="stock-grid"></div>
     </section>
 
