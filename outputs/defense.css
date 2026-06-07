@@ -1,0 +1,17 @@
+.defense-panel{border-bottom:1px solid var(--line)}
+.defense-grid{display:grid;grid-template-columns:.8fr 1.2fr;gap:12px}
+.market-filter-card,.risk-calculator{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:22px}
+.market-filter-card>span,.risk-output span{color:var(--muted);font-size:11px}
+.market-filter-card>strong{display:block;font-size:28px;color:var(--green);margin:8px 0}
+.market-filter-card p{font-size:12px;color:var(--muted)}
+.market-filter-card div{display:flex;justify-content:space-between;border-top:1px solid var(--line);padding-top:12px}
+.market-filter-card b{color:var(--green)}
+.risk-calculator{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.risk-calculator>div:first-child{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.risk-calculator label{font-size:11px;color:var(--muted)}
+.risk-calculator input,.risk-calculator select{width:100%;display:block;margin-top:6px}
+.risk-output{background:var(--soft);border-radius:12px;padding:18px}
+.risk-output strong{display:block;font:28px "Space Grotesk";margin:8px 0}
+.risk-output small{color:var(--muted)}
+@media(max-width:800px){.defense-grid,.risk-calculator{grid-template-columns:1fr}}
+@media(max-width:500px){.risk-calculator>div:first-child{grid-template-columns:1fr}}

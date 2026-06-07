@@ -1,0 +1,3 @@
+.load-error{grid-column:1/-1;background:#211817;border:1px solid #603b37;border-radius:14px;padding:24px;color:#e7aaa3}
+.load-error p{color:#bfa09c;margin:8px 0 16px}
+.load-error button{background:#73463f}

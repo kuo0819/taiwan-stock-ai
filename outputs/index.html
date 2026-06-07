@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#304b41">
+  <title>台股策略研究室</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="market.css">
+  <link rel="stylesheet" href="defense.css">
+  <link rel="stylesheet" href="dark-theme.css">
+  <link rel="stylesheet" href="load-error.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand"><span>衡</span><div><b>衡策研究</b><small>TAIWAN EQUITY LAB</small></div></div>
+    <nav>
+      <a class="active" href="#overview">市場總覽</a>
+      <a href="#picks">策略選股</a>
+      <a href="#market">全部股票</a>
+      <a href="#analysis">股票分析</a>
+      <a href="#backtest">策略回測</a>
+    </nav>
+    <div class="method">
+      <small>核心模型</small>
+      <strong>Q · M · R</strong>
+      <p>品質 Quality<br>動能 Momentum<br>風險 Risk</p>
+    </div>
+  </aside>
+
+  <main>
+    <header>
+      <div><p class="eyebrow">MODEL PORTFOLIO · <span id="market-date">資料載入中</span></p><h1>把判斷，變成可以驗證的策略。</h1></div>
+      <div class="status"><i></i>官方盤後資料 · 每日更新</div>
+    </header>
+
+    <section id="overview" class="hero">
+      <div class="hero-copy">
+        <span class="tag">本週策略觀點</span>
+        <h2>順勢而為，<br><em>讓風險先說話。</em></h2>
+        <p>聚焦高流動性、獲利品質佳且維持中期上升趨勢的台股。市場波動升高時，降低單筆曝險，不預測底部。</p>
+        <a href="#picks">查看 10 檔候選股 →</a>
+      </div>
+      <div class="score-card">
+        <div class="score-top"><span>策略信心分數</span><b>偏多 / 審慎</b></div>
+        <div class="gauge"><div><strong>72</strong><small>/ 100</small></div></div>
+        <div class="score-grid"><div><span>趨勢</span><b>強</b></div><div><span>風險</span><b>中</b></div><div><span>部位</span><b>70%</b></div></div>
+      </div>
+    </section>
+
+    <section class="metrics">
+      <article><span>全市場分析</span><strong id="universe-count">—</strong><small>上市櫃股票與 ETF</small></article>
+      <article><span>目標風報比</span><strong>2.2<em>×</em></strong><small>獲利空間 ÷ 承擔風險</small></article>
+      <article><span>單筆最大風險</span><strong>1.0<em>%</em></strong><small>占投資組合淨值</small></article>
+      <article><span>策略週期</span><strong>20–60<em>日</em></strong><small>波段趨勢策略</small></article>
+    </section>
+
+    <section class="defense-panel">
+      <div class="section-head"><div><p class="eyebrow">DEFENSIVE FILTER</p><h2>大盤濾網與投組風控</h2></div><p>先決定可承擔多少市場風險，再決定買哪一檔股票。</p></div>
+      <div class="defense-grid">
+        <article class="market-filter-card"><span>大盤狀態</span><strong id="market-state">載入中</strong><p id="market-description"></p><div><small>建議股票曝險</small><b id="market-exposure">—</b></div></article>
+        <article class="risk-calculator">
+          <div><label>投資資金（元）<input id="capital" type="number" value="1000000" min="10000" step="10000"></label><label>單筆最大風險<select id="risk-budget"><option value=".005">0.5%</option><option value=".01">1.0%</option></select></label></div>
+          <div class="risk-output"><span>目前分析標的最大部位</span><strong id="max-position">—</strong><small id="risk-output-note">依停損距離與單筆風險計算</small></div>
+        </article>
+      </div>
+    </section>
+
+    <section id="picks">
+      <div class="section-head"><div><p class="eyebrow">MODEL PICKS</p><h2>全市場前 10 名</h2></div><p id="method-text">正在讀取全市場排名資料。</p></div>
+      <div id="stock-grid" class="stock-grid"></div>
+    </section>
+
+    <section id="market" class="market-section">
+      <div class="section-head"><div><p class="eyebrow">FULL MARKET</p><h2>全部股票 AI 分析</h2></div><p>點擊任一股票，即可查看完整交易計畫、AI 判斷與真實歷史回測。</p></div>
+      <div class="market-toolbar">
+        <input id="market-search" type="search" placeholder="搜尋股票代號或名稱">
+        <select id="decision-filter"><option value="all">全部進場判斷</option><option value="enter">可分批進場</option><option value="wait">等待回測</option><option value="avoid">暫不進場</option></select>
+        <select id="market-filter"><option value="all">上市＋上櫃</option><option value="上市">上市</option><option value="上櫃">上櫃</option></select>
+        <select id="type-filter"><option value="all">股票＋ETF</option><option value="股票">股票</option><option value="ETF">ETF</option></select>
+        <span id="result-count"></span>
+      </div>
+      <div class="market-table-wrap">
+        <table class="market-table"><thead><tr><th>排名／股票</th><th>AI 判斷</th><th>現價</th><th>建議進場區間</th><th>止盈</th><th>止損</th><th>QMR</th></tr></thead><tbody id="market-body"></tbody></table>
+      </div>
+      <div class="pager"><button id="prev-page">上一頁</button><span id="page-info"></span><button id="next-page">下一頁</button></div>
+    </section>
+
+    <section id="analysis" class="analysis-panel">
+      <div class="section-head"><div><p class="eyebrow">STOCK ANALYSIS</p><h2>個股交易計畫</h2></div><select id="stock-select"></select></div>
+      <div class="trade-layout">
+        <div>
+          <div class="price-strip">
+            <article><span>進場區間</span><strong id="entry"></strong></article>
+            <article><span>分批出場</span><strong id="exit"></strong></article>
+            <article class="green"><span>止盈價格</span><strong id="take"></strong></article>
+            <article class="red"><span>止損價格</span><strong id="stop"></strong></article>
+          </div>
+          <div class="chart-wrap"><span class="chart-label">近 180 日價格趨勢</span><canvas id="price-chart"></canvas></div>
+        </div>
+        <aside class="ai-card">
+          <span class="tag">AI 策略解讀</span>
+          <h3 id="ai-title"></h3>
+          <p id="ai-text"></p>
+          <div id="signals"></div>
+          <div class="risk-note"><b>執行紀律</b><p>跌破止損價即退出；若跳空跌破，以下一個可成交價格為準。單筆虧損不超過總資金 1%。</p></div>
+        </aside>
+      </div>
+    </section>
+
+    <section id="backtest" class="backtest">
+      <div class="section-head"><div><p class="eyebrow">STRATEGY BACKTEST</p><h2>策略回測實驗室</h2></div><button id="run-test">重新執行回測</button></div>
+      <div class="controls">
+        <label>標的<select id="bt-stock"></select></label>
+        <label>短均線<select id="fast-ma"><option>10</option><option selected>20</option><option>30</option></select></label>
+        <label>長均線<select id="slow-ma"><option>50</option><option selected>60</option><option>120</option></select></label>
+        <label>停損幅度<select id="stop-pct"><option value=".05">5%</option><option value=".08" selected>8%</option><option value=".1">10%</option></select></label>
+      </div>
+      <div class="bt-results">
+        <article><span>策略總報酬</span><strong id="total-return"></strong></article>
+        <article><span>最大回撤</span><strong id="drawdown"></strong></article>
+        <article><span>勝率</span><strong id="win-rate"></strong></article>
+        <article><span>交易次數</span><strong id="trades"></strong></article>
+      </div>
+      <div class="equity-wrap"><span class="chart-label">策略資產曲線</span><canvas id="equity-chart"></canvas></div>
+      <p class="disclaimer">排名使用 TWSE、TPEx 官方盤後與財務資料，歷史價格來自 Yahoo Finance。回測不含交易成本、滑價與股利，且不代表未來績效；交易前請核對最新行情。</p>
+    </section>
+
+    <footer><div><b>衡策研究</b><p>投資不是猜答案，而是管理每一個可能。</p><small>作者：JunTing</small></div><div><a href="https://www.twse.com.tw/" target="_blank">TWSE 臺灣證券交易所</a><a href="https://www.tpex.org.tw/" target="_blank">TPEx 櫃買中心</a></div></footer>
+  </main>
+  <nav class="mobile-nav">
+    <a href="#overview">總覽</a>
+    <a href="#market">全部標的</a>
+    <a href="#analysis">分析</a>
+    <a href="#backtest">回測</a>
+  </nav>
+  <script src="app.js"></script>
+</body>
+</html>
