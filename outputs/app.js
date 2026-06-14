@@ -1,190 +1,76 @@
-let stocks = [];
-let page = 1;
-let marketFilter = null;
-let pickCategory = "all";
-const pageSize = 40;
-const money = n => n >= 1000 ? n.toLocaleString("zh-TW", {maximumFractionDigits: 0}) : n.toLocaleString("zh-TW", {maximumFractionDigits: 2});
-const grid = document.querySelector("#stock-grid");
-const select = document.querySelector("#stock-select");
-const btSelect = document.querySelector("#bt-stock");
-
-function draw(canvas, data, color = "#65c59d") {
-  const ctx = canvas.getContext("2d"), dpr = devicePixelRatio || 1, w = canvas.parentElement.clientWidth, h = canvas.parentElement.clientHeight;
-  canvas.width = w * dpr; canvas.height = h * dpr; ctx.scale(dpr, dpr); ctx.clearRect(0, 0, w, h);
-  const min = Math.min(...data) * .97, max = Math.max(...data) * 1.03;
-  ctx.strokeStyle = "#26342e";
-  for (let i = 1; i < 5; i++) { const y = h * i / 5; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
-  ctx.strokeStyle = color; ctx.lineWidth = 2.5; ctx.lineJoin = "round"; ctx.lineCap = "round"; ctx.beginPath();
-  data.forEach((v, i) => { const x = i / (data.length - 1) * w, y = h - (v - min) / (max - min) * h; i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
-  ctx.stroke();
+let DATA = null;
+const $ = (id) => document.getElementById(id);
+function fmt(n, d=2){ return Number.isFinite(+n) ? (+n).toLocaleString('zh-TW',{maximumFractionDigits:d}) : '—'; }
+function cls(code){ return code==='enter'?'ok':code==='wait'?'warn':'bad'; }
+function decisionClass(code){ return code==='enter'?'enter':code==='wait'?'wait':'avoid'; }
+function stockUrl(code){ return `https://tw.stock.yahoo.com/quote/${code}`; }
+async function load(){
+  const res = await fetch(`market-data.json?ts=${Date.now()}`, {cache:'no-store'});
+  if(!res.ok) throw new Error('market-data.json 載入失敗');
+  DATA = await res.json();
+  render();
 }
-
-function openStock(code) {
-  ensureOption(select, code); ensureOption(btSelect, code);
-  select.value = code; btSelect.value = code; update(code); backtest();
-  document.querySelector("#analysis").scrollIntoView();
+function filtered(){
+  const g = $('groupSelect').value;
+  let arr = DATA.stocks || [];
+  if(g !== 'all') arr = arr.filter(x => x.sector_group === g);
+  return arr;
 }
-
-function ensureOption(element, code) {
-  if ([...element.options].some(o => o.value === code)) return;
-  const s = stocks.find(x => x.code === code);
-  element.add(new Option(`${s.code} ${s.name}${element === select ? `｜${s.decision}` : ""}`, s.code));
+function positionSize(s){
+  const capital = +$('capital').value || 30000;
+  const riskPct = +$('riskPct').value || 0.005;
+  const riskMoney = capital * riskPct;
+  const entry = ((+s.entry_low || +s.price) + (+s.entry_high || +s.price))/2;
+  const perShareRisk = Math.max(entry - (+s.stop || 0), 0.01);
+  const shares = Math.floor(riskMoney / perShareRisk);
+  const cost = shares * entry;
+  return {riskMoney, shares, cost, entry};
 }
-
-function renderStocks() {
-  renderPickCards();
-  select.innerHTML = ""; btSelect.innerHTML = "";
-  stocks.slice(0, 100).forEach(s => {
-    select.innerHTML += `<option value="${s.code}">${s.code} ${s.name}｜${s.decision}</option>`;
-    btSelect.innerHTML += `<option value="${s.code}">${s.code} ${s.name}</option>`;
-  });
+function renderCards(){
+  const n = +$('topN').value || 5;
+  const arr = filtered().filter(x => x.decision_code !== 'avoid').slice(0,n);
+  const list = arr.length ? arr : filtered().slice(0,n);
+  $('cards').innerHTML = list.map(s => {
+    const p = positionSize(s);
+    return `<article class="card ${decisionClass(s.decision_code)}">
+      <span class="chip">${s.market}</span><span class="chip">${s.sector}</span><span class="chip score">Score ${s.score}</span>
+      <h3>${s.code} ${s.name}</h3>
+      <p class="${cls(s.decision_code)}"><b>${s.decision}</b></p>
+      <p class="reason">${s.reason || ''}</p>
+      <div class="plan">
+        <div><span class="label">買進區</span>${fmt(s.entry_low)} – ${fmt(s.entry_high)}</div>
+        <div><span class="label">建議股數</span>${p.shares} 股</div>
+        <div><span class="label">停損</span>${fmt(s.stop)}</div>
+        <div><span class="label">TP2</span>${fmt(s.tp2)}</div>
+        <div><span class="label">RSI</span>${fmt(s.rsi14,1)}</div>
+        <div><span class="label">資料源</span>${s.data_source || '—'}</div>
+      </div>
+      <p><a href="${stockUrl(s.code)}" target="_blank" rel="noopener" style="color:#54a6ff">查看 Yahoo 股價 →</a></p>
+    </article>`;
+  }).join('');
 }
-
-function renderPickCards() {
-  grid.innerHTML = "";
-  const labels = {all: "全市場", ETF: "ETF", electronic: "電子類", financial: "金融類", traditional: "傳產／其他"};
-  const picks = stocks.filter(s => pickCategory === "all" || stockCategory(s) === pickCategory).slice(0, 10);
-  document.querySelector("#picks-title").textContent = `${labels[pickCategory]}前 10 名`;
-  picks.forEach((s, i) => {
-    grid.innerHTML += `<article class="stock" data-code="${s.code}"><div class="top"><span class="rank">#${String(i + 1).padStart(2, "0")}</span><span class="score">QMR ${s.score}</span></div><h3>${s.name}</h3><span class="code">${s.code} · ${s.market}</span><div class="price">NT$ ${money(s.price)}</div><span class="decision ${s.decision_code}">${s.decision}</span><span class="industry">${s.industry}</span></article>`;
-  });
-  document.querySelectorAll(".stock").forEach(el => el.onclick = () => openStock(el.dataset.code));
+function renderTable(){
+  const q = $('search').value.trim().toLowerCase();
+  let arr = filtered();
+  if(q) arr = arr.filter(s => `${s.code} ${s.name} ${s.sector} ${s.decision}`.toLowerCase().includes(q));
+  $('stockRows').innerHTML = arr.slice(0,180).map(s => `<tr>
+    <td>${s.code}</td><td>${s.name}</td><td>${s.sector}</td><td>${fmt(s.price)}</td><td>${s.score}</td>
+    <td class="${cls(s.decision_code)}">${s.decision}</td><td>${fmt(s.entry_low)}–${fmt(s.entry_high)}</td><td>${fmt(s.stop)}</td><td>${fmt(s.tp2)}</td>
+  </tr>`).join('');
 }
-
-function stockCategory(s) {
-  if (s.asset_type === "ETF") return "ETF";
-  const industry = s.industry || "";
-  if (/半導體|電子|電腦|光電|通信|資訊|數位|網路/.test(industry)) return "electronic";
-  if (/金融|保險|證券/.test(industry)) return "financial";
-  return "traditional";
+function render(){
+  $('marketDate').textContent = DATA.market_date || '—';
+  $('generatedAt').textContent = DATA.generated_at ? new Date(DATA.generated_at).toLocaleString('zh-TW') : '—';
+  $('marketState').textContent = `${DATA.market_filter?.state || '—'} · 建議曝險 ${DATA.market_filter?.exposure ?? '—'}%`;
+  $('stockCount').textContent = `${DATA.history_count || 0} / ${DATA.universe_count || 0}`;
+  const src = DATA.source_summary || {};
+  $('sourceNote').textContent = `資料來源：${src.primary || '—'}；${src.note || ''}`;
+  renderCards();
+  renderTable();
 }
-
-function filteredStocks() {
-  const q = document.querySelector("#market-search").value.trim().toLowerCase();
-  const decision = document.querySelector("#decision-filter").value;
-  const market = document.querySelector("#market-filter").value;
-  const type = document.querySelector("#type-filter").value;
-  return stocks.filter(s => (!q || s.code.toLowerCase().includes(q) || s.name.toLowerCase().includes(q)) && (decision === "all" || s.decision_code === decision) && (market === "all" || s.market === market) && (type === "all" || s.asset_type === type));
-}
-
-function renderMarket() {
-  const result = filteredStocks(), pages = Math.max(1, Math.ceil(result.length / pageSize));
-  page = Math.min(page, pages);
-  const rows = result.slice((page - 1) * pageSize, page * pageSize);
-  document.querySelector("#market-body").innerHTML = rows.map(s => `<tr data-code="${s.code}"><td><b>#${s.rank} ${s.name}</b><small>${s.code} · ${s.market} · ${s.asset_type} · ${s.industry}</small></td><td><span class="decision ${s.decision_code}">${s.decision}</span></td><td>${money(s.price)}</td><td>${money(s.entry_low)} – ${money(s.entry_high)}</td><td>${money(s.take)}</td><td>${money(s.stop)}</td><td><b>${s.score}</b></td></tr>`).join("");
-  document.querySelector("#result-count").textContent = `${result.length.toLocaleString()} 檔`;
-  document.querySelector("#page-info").textContent = `第 ${page} / ${pages} 頁`;
-  document.querySelector("#prev-page").disabled = page === 1;
-  document.querySelector("#next-page").disabled = page === pages;
-  document.querySelectorAll("#market-body tr").forEach(el => el.onclick = () => openStock(el.dataset.code));
-}
-
-function update(code) {
-  const s = stocks.find(x => x.code === code);
-  document.querySelector("#entry").textContent = `${money(s.entry_low)} – ${money(s.entry_high)}`;
-  document.querySelector("#exit").textContent = money(s.exit); document.querySelector("#take").textContent = money(s.take); document.querySelector("#stop").textContent = money(s.stop);
-  document.querySelector("#ai-title").textContent = `${s.name}｜${s.decision}`;
-  document.querySelector("#ai-text").textContent = s.thesis;
-  const cash = s.operating_cashflow == null ? "資料不足" : s.operating_cashflow > 0 ? "正值" : "負值";
-  const quality = s.asset_type === "ETF" ? `<div class="signal"><span>ETF 品質評估</span><b>趨勢與風險模式</b></div>` : `<div class="signal"><span>EPS / 年化 ROE</span><b>${(s.eps || 0).toFixed(2)} / ${(s.roe || 0).toFixed(1)}%</b></div><div class="signal"><span>營業現金流 / 負債比</span><b>${cash} / ${(s.debt_ratio || 0).toFixed(1)}%</b></div><div class="signal"><span>品質條件通過</span><b>${s.quality_pass || 0} / 5</b></div>`;
-  document.querySelector("#signals").innerHTML = `<div class="signal"><span>標的類型</span><b>${s.asset_type} · ${s.market}</b></div>${quality}<div class="signal"><span>全市場排名 / QMR</span><b>#${s.rank} · ${s.score} 分</b></div><div class="signal"><span>距離 20 日均線</span><b>${s.distance_ma20 >= 0 ? "+" : ""}${s.distance_ma20}%</b></div><div class="signal"><span>模型停損幅度</span><b>${s.risk_pct}%</b></div>`;
-  draw(document.querySelector("#price-chart"), s.prices.slice(-180));
-  calculateRisk();
-}
-
-function calculateRisk() {
-  if (!stocks.length) return;
-  const s = stocks.find(x => x.code === select.value) || stocks[0];
-  const capital = Math.max(0, +document.querySelector("#capital").value || 0);
-  const budget = +document.querySelector("#risk-budget").value;
-  const riskPerShare = Math.max(.01, s.entry_high - s.stop);
-  const riskShares = Math.floor(capital * budget / riskPerShare);
-  const capShares = Math.floor(capital * .08 / s.entry_high);
-  const shares = Math.min(riskShares, capShares);
-  const lots = Math.floor(shares / 1000);
-  document.querySelector("#max-position").textContent = lots > 0 ? `${lots} 張` : `${shares} 股`;
-  document.querySelector("#risk-output-note").textContent = `約 NT$ ${Math.round(shares * s.entry_high).toLocaleString()}；單一標的不超過資金 8%`;
-}
-
-function ma(a, n, i) { if (i < n - 1) return null; let x = 0; for (let j = i - n + 1; j <= i; j++) x += a[j]; return x / n; }
-function backtest() {
-  const s = stocks.find(x => x.code === btSelect.value), prices = s.prices, fast = +document.querySelector("#fast-ma").value, slow = +document.querySelector("#slow-ma").value, stop = +document.querySelector("#stop-pct").value;
-  let cash = 100, units = 0, entry = 0, wins = 0, trades = 0, equity = [];
-  const cost = .003;
-  for (let i = 0; i < prices.length; i++) { const f = ma(prices, fast, i), l = ma(prices, slow, i), p = prices[i]; if (!units && f && f > l) { units = cash * (1 - cost / 2) / p; entry = p; cash = 0; } if (units && ((f && f < l) || p < entry * (1 - stop))) { cash = units * p * (1 - cost / 2); if (p > entry) wins++; trades++; units = 0; } equity.push(cash + units * p); }
-  if (units) { cash = units * prices.at(-1) * (1 - cost / 2); if (prices.at(-1) > entry) wins++; trades++; }
-  let peak = equity[0], dd = 0; equity.forEach(v => { peak = Math.max(peak, v); dd = Math.min(dd, (v - peak) / peak); });
-  document.querySelector("#total-return").textContent = `${cash >= 100 ? "+" : ""}${(cash - 100).toFixed(1)}%`; document.querySelector("#drawdown").textContent = `${(dd * 100).toFixed(1)}%`; document.querySelector("#win-rate").textContent = `${trades ? Math.round(wins / trades * 100) : 0}%`; document.querySelector("#trades").textContent = trades; draw(document.querySelector("#equity-chart"), equity);
-}
-
-async function init() {
-  try {
-    let data = null, lastError = null;
-    for (const path of ["market-data.json", "outputs/market-data.json"]) {
-      try {
-        const response = await fetch(path, {cache: "no-store"});
-        if (!response.ok) throw new Error(`${path}: HTTP ${response.status}`);
-        const candidate = await response.json();
-        if (!Array.isArray(candidate.stocks) || !candidate.stocks.length) throw new Error(`${path}: stocks 資料為空`);
-        data = candidate;
-        break;
-      } catch (error) { lastError = error; }
-    }
-    if (!data) throw lastError || new Error("找不到市場資料");
-    stocks = data.stocks;
-    marketFilter = data.market_filter || {state: "資料更新中", exposure: 40, description: "目前使用舊版市場資料，建議採防守部位。"};
-    document.querySelector("#market-date").textContent = data.market_date; document.querySelector("#universe-count").textContent = data.history_count.toLocaleString();
-    document.querySelector("#method-text").textContent = `${data.method}。已完成 ${data.history_count} 檔 AI 分析，價格日期：${data.market_date}。`;
-    document.querySelector("#market-state").textContent = marketFilter.state;
-    document.querySelector("#market-description").textContent = marketFilter.description;
-    document.querySelector("#market-exposure").textContent = `${marketFilter.exposure}% 以下`;
-    const confidence = data.confidence || {score: 50, label: "資料不足", validation: {}, data_completeness: 0, freshness_days: 99};
-    document.querySelector("#confidence-score").textContent = confidence.score;
-    document.querySelector("#confidence-label").textContent = `${confidence.label}信心`;
-    document.querySelector("#confidence-gauge").style.background = `conic-gradient(var(--green) 0 ${confidence.score}%, #26332e ${confidence.score}%)`;
-    document.querySelector("#validation-win-rate").textContent = `${confidence.validation.win_rate || 0}%`;
-    document.querySelector("#data-completeness").textContent = `${confidence.data_completeness || 0}%`;
-    document.querySelector("#hero-exposure").textContent = `${marketFilter.exposure}%`;
-    document.querySelector("#validation-return").textContent = `${confidence.validation.strategy_return >= 0 ? "+" : ""}${confidence.validation.strategy_return || 0}%`;
-    document.querySelector("#benchmark-return").textContent = `${confidence.validation.benchmark_return >= 0 ? "+" : ""}${confidence.validation.benchmark_return || 0}%`;
-    document.querySelector("#excess-return").textContent = `${confidence.validation.excess_return >= 0 ? "+" : ""}${confidence.validation.excess_return || 0}%`;
-    document.querySelector("#validation-periods").textContent = `${confidence.validation.periods || 0} 個走勢外推期間；每次成本 ${confidence.validation.cost_assumption || 0}%`;
-    document.querySelector("#confidence-note").textContent = confidence.validation.method || "樣本不足，信心度上限為 60。";
-    if (confidence.freshness_days > 3) {
-      const alert = document.querySelector("#freshness-alert");
-      alert.hidden = false;
-      alert.textContent = `資料已過期 ${confidence.freshness_days} 天，排名與進場價格僅供參考，請等待下一次更新。`;
-    }
-    const actions = marketFilter.state === "多頭"
-      ? ["可依進場區間分批建立部位", "仍保留至少 20% 現金", "短線過熱或等待回測標的不追價"]
-      : marketFilter.state === "中性"
-        ? ["只買品質 4/5 以上且可分批進場標的", "新部位縮小至平常的一半", "保留約 45% 現金等待趨勢確認"]
-        : ["暫停積極新增個股部位", "優先保留現金、短債或防禦型 ETF", "現有持股跌破風控條件時執行減碼"];
-    document.querySelector("#market-actions").innerHTML = actions.map(x => `<li>${x}</li>`).join("");
-    renderStocks(); renderMarket(); update(stocks[0].code); backtest();
-  } catch (e) {
-    grid.innerHTML = `<div class="load-error"><b>全市場資料載入失敗</b><p>${e.message || "請稍後重新整理。"}</p><button onclick="location.reload()">重新載入</button></div>`;
-    console.error("市場資料初始化失敗", e);
-  }
-}
-
-select.onchange = e => update(e.target.value);
-document.querySelector("#run-test").onclick = backtest;
-[btSelect, ...document.querySelectorAll(".controls select")].forEach(x => x.onchange = backtest);
-["#market-search", "#decision-filter", "#market-filter", "#type-filter"].forEach(id => document.querySelector(id).oninput = () => { page = 1; renderMarket(); });
-document.querySelector("#prev-page").onclick = () => { page--; renderMarket(); };
-document.querySelector("#next-page").onclick = () => { page++; renderMarket(); };
-document.querySelector("#capital").oninput = calculateRisk;
-document.querySelector("#risk-budget").onchange = calculateRisk;
-document.querySelector(".pick-tabs").addEventListener("click", event => {
-  const button = event.target.closest("[data-pick-category]");
-  if (!button || !stocks.length) return;
-  pickCategory = button.dataset.pickCategory;
-  document.querySelectorAll("[data-pick-category]").forEach(x => {
-    x.classList.toggle("active", x === button);
-    x.setAttribute("aria-pressed", x === button ? "true" : "false");
-  });
-  renderPickCards();
+['groupSelect','topN','capital','riskPct'].forEach(id => $(id).addEventListener('change', render));
+$('search').addEventListener('input', renderTable);
+$('refreshBtn').addEventListener('click', render);
+load().catch(err => {
+  document.body.innerHTML = `<main class="container"><section class="panel"><h1>資料載入失敗</h1><p>${err.message}</p><p>請確認 GitHub Actions 是否成功產生 outputs/market-data.json。</p></section></main>`;
 });
-window.onresize = () => { if (stocks.length) { update(select.value); backtest(); } };
-init();
