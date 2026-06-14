@@ -1,33 +1,22 @@
-# 台股全市場策略研究室｜資料更新修正版
+# 台股日線波段策略研究室｜Top 10 + 回測修正版
 
-這是直接覆蓋部署版，重點修正：
+這版保留原本 GitHub Actions 自動更新資料的修正，同時恢復：
 
-1. GitHub Actions 不再靜默沿用舊 `market-data.json`。
-2. `update_market.py` 以 TWSE / TPEx 官方盤後資料為主，即使 Yahoo 歷史資料失敗，也會用官方當日資料產生新日期資料。
-3. 部署前會檢查 `market-data.json` 的資料日期、股票數量與新鮮度。
-4. 網站會顯示資料來源、資料日期、大盤狀態與 Top 名單。
+- Top 3 / Top 5 / Top 10 推薦名單
+- 分類篩選
+- 現股日線波段下單參數
+- 單檔策略回測
+- 全部股票表格與套用功能
 
-## 使用方式
+## 重點修正
 
-把本 ZIP 解壓縮後，整包覆蓋到 GitHub repo 根目錄，commit/push 到 `main`。
+1. 更新資料失敗時，GitHub Actions 會失敗，不再偷偷沿用舊的 `market-data.json`。
+2. `outputs/market-data.json` 必須由 `work/update_market.py` 正常產生才會部署。
+3. 網站端保留 Top 10 與回測 UI。
+4. 回測使用 FinMind API 於瀏覽器端抓取單檔日線資料；如果遇到額度限制，可在網站填入 FinMind Token。
 
-GitHub Pages 請設定為：
+## 使用
 
-Settings → Pages → Source: GitHub Actions
+把本 ZIP 全部檔案上傳覆蓋到 GitHub repository 根目錄，Commit 後到 Actions 手動執行 workflow。
 
-## 本機測試
-
-```bash
-python work/update_market.py
-python -m http.server 8317 --directory outputs
-```
-
-打開：
-
-```text
-http://127.0.0.1:8317/
-```
-
-## 注意
-
-本工具是台股日線波段研究與風控輔助，不是當沖，也不是保證獲利訊號。
+GitHub Pages Source 請使用 **GitHub Actions**。

@@ -3,54 +3,37 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>台股全市場策略研究室</title>
+  <title>台股日線波段策略研究室｜Top 10 + 回測版</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <header class="hero">
-    <div class="badge">TAIWAN EQUITY LAB</div>
+    <div class="badge">TAIWAN EQUITY LAB · SWING ONLY</div>
     <h1>台股日線波段策略研究室</h1>
-    <p>官方盤後資料每日更新。以大盤濾網、趨勢、位置與風控產生 Top 名單。不是當沖，也不是保證獲利訊號。</p>
+    <p>官方盤後資料每日更新。主打「不當沖」：收盤後分析、隔日等待買進區、停損停利分批出場。保留 Top 10 推薦與策略回測。</p>
   </header>
 
   <main class="container">
     <section class="panel status-grid">
-      <div>
-        <span class="label">資料日期</span>
-        <strong id="marketDate">—</strong>
-      </div>
-      <div>
-        <span class="label">產生時間</span>
-        <strong id="generatedAt">—</strong>
-      </div>
-      <div>
-        <span class="label">大盤濾網</span>
-        <strong id="marketState">—</strong>
-      </div>
-      <div>
-        <span class="label">分析檔數</span>
-        <strong id="stockCount">—</strong>
-      </div>
+      <div><span class="label">資料日期</span><strong id="marketDate">—</strong></div>
+      <div><span class="label">產生時間</span><strong id="generatedAt">—</strong></div>
+      <div><span class="label">大盤濾網</span><strong id="marketState">—</strong></div>
+      <div><span class="label">分析檔數</span><strong id="stockCount">—</strong></div>
+    </section>
+
+    <section class="panel warning">
+      <b>使用提醒：</b>這是台股現股日線波段輔助工具，不是當沖、不是保證獲利訊號。建議先用紙上交易驗證，再用小額資金測試。
     </section>
 
     <section class="panel controls">
       <label>分類
-        <select id="groupSelect">
-          <option value="all">全部</option>
-          <option value="etf">ETF</option>
-          <option value="semiconductor">半導體</option>
-          <option value="electronics_ai_server">電子／AI／伺服器</option>
-          <option value="finance">金融</option>
-          <option value="shipping">航運</option>
-          <option value="defensive_telecom">防禦／電信／民生</option>
-          <option value="biotech">生技醫療</option>
-        </select>
+        <select id="groupSelect"></select>
       </label>
       <label>推薦數量
         <select id="topN">
           <option value="3">Top 3</option>
-          <option value="5" selected>Top 5</option>
-          <option value="10">Top 10</option>
+          <option value="5">Top 5</option>
+          <option value="10" selected>Top 10</option>
         </select>
       </label>
       <label>資金（TWD）
@@ -58,32 +41,55 @@
       </label>
       <label>單筆風險
         <select id="riskPct">
-          <option value="0.005">0.5%</option>
+          <option value="0.003">0.3%</option>
+          <option value="0.005" selected>0.5%</option>
           <option value="0.01">1%</option>
         </select>
+      </label>
+      <label>FinMind Token（回測選填）
+        <input id="token" type="password" placeholder="免費額度不足時再填" />
       </label>
       <button id="refreshBtn">重新篩選</button>
     </section>
 
     <section class="panel">
       <div class="section-head">
-        <h2>推薦觀察名單</h2>
+        <h2>Top 推薦觀察名單</h2>
         <p id="sourceNote">資料載入中...</p>
       </div>
       <div id="cards" class="cards"></div>
     </section>
 
+    <section class="main-grid">
+      <section class="panel selected-panel">
+        <div class="section-head">
+          <h2>選取股票下單計畫</h2>
+          <p>點推薦卡或表格的「套用」，這裡會顯示現股波段參數。</p>
+        </div>
+        <div id="selectedPlan" class="selectedPlan empty">尚未選取股票。</div>
+      </section>
+      <section class="panel backtest-panel">
+        <div class="section-head">
+          <h2>策略回測</h2>
+          <p>用同一套日線波段規則檢查最近表現。回測是粗略模擬，不代表未來績效。</p>
+        </div>
+        <div class="actions"><button id="backtestBtn" class="primary">回測選取股票</button></div>
+        <div id="backtestSummary" class="backtest-summary empty">尚未回測。</div>
+        <div id="backtestTrades" class="trade-list"></div>
+      </section>
+    </section>
+
     <section class="panel">
       <div class="section-head">
-        <h2>全部股票</h2>
-        <p>可用搜尋快速找代碼或名稱。</p>
+        <h2>全部股票 / ETF</h2>
+        <p>可搜尋代碼、名稱、分類；也可以套用到上方回測。</p>
       </div>
-      <input id="search" class="search" placeholder="搜尋：2330、台積電、ETF、金融..." />
+      <input id="search" class="search" placeholder="搜尋：2330、台積電、0050、ETF、金融..." />
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
-              <th>代碼</th><th>名稱</th><th>分類</th><th>價格</th><th>分數</th><th>狀態</th><th>買進區</th><th>停損</th><th>TP2</th>
+              <th>操作</th><th>代碼</th><th>名稱</th><th>分類</th><th>價格</th><th>分數</th><th>狀態</th><th>買進區</th><th>停損</th><th>TP2</th>
             </tr>
           </thead>
           <tbody id="stockRows"></tbody>
@@ -91,6 +97,7 @@
       </div>
     </section>
   </main>
+  <footer>台股日線波段策略研究室｜Top 10 + 回測版｜資料來源以 GitHub Actions 產生的 market-data.json 為主。</footer>
   <script src="app.js"></script>
 </body>
 </html>
